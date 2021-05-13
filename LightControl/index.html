@@ -1,0 +1,257 @@
+<head>
+	<meta charset="UTF-8">
+	<title>Lights</title>
+	<link rel="icon" href="http://ganer.xyz/LightControl/favicon.ico">
+	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/css-toggle-switch@latest/dist/toggle-switch.css" />
+	<style>
+		.bruh {
+			display: flex;
+			flex-flow: row wrap;
+			align-items: center;
+			grid-row-gap: 20px;
+			grid-column-gap: 20px;
+		}
+		.device {
+			width: 175px;
+			height: 175px;
+			background-color: #555;
+			padding: 15px;
+			border-radius: 10%;
+			text-align: center;
+			font-size: 20px;
+		}
+		.device:hover {
+			background-color: #fff9;
+		}
+		.device:active {
+			background-color: #fff;
+		}
+		.rang {
+			-webkit-appearance: none;
+			width: 100%;
+			height: 10px;
+			border-radius: 5px;  
+			background: #d3d3d3;
+			outline: none;
+			opacity: 0.7;
+			-webkit-transition: .2s;
+			transition: opacity .2s;
+			margin-top: 10px;
+		}
+		.rang:hover {
+			opacity: 1;
+		}
+		.rang::-webkit-slider-thumb {
+			-webkit-appearance: none;
+			appearance: none;
+			width: 20px;
+			height: 20px;
+			border-radius: 50%; 
+			background: #4CAF50;
+			cursor: pointer;
+		}
+		.labelText {
+			display: block;
+			width: 100%;
+			margin-bottom: 6px;
+			font-family: Helvetica;
+		}
+		.close {
+		    position: absolute;
+		    transform: translate(60px, -3px);
+		    padding: 1px 1px;
+		    width: 25px;
+		    height: 25px;
+		    background:#ccc;
+		    border: none;
+		}
+		.setAll {
+			position: absolute;
+		    transform: translate(-87px, -8px);
+		    padding: 1px 1px;
+		    width: 35px;
+		    height: 35px;
+		    border: none;
+		}
+		.deviceName {
+			position: relative;
+			display: block;
+			text-align: center;
+			font-weight: 600;
+			font-family: Helvetica;
+			font-size: 30px;
+		}
+	</style>
+	<script>
+		var WS = new WebSocket("ws://WEBSOCKETADDRESS/WS");
+		function ws_s(c) {
+			console.log(`Sending: ${c}`);
+			WS.send(c);
+		}
+		function send() {
+			ws_s(document.getElementById("imageList").children[0].getState().split('>')[1])//"off;"+Array.from(document.getElementById("imageList").children).map(x => x.getState()).join(';'));
+		}
+		function set(k, s) {
+			document.getElementById(k).STATE = s;
+			ws_s(document.getElementById(k).getState());
+		}
+		function addDevice(url, key, j) { //Stroke inducing however working
+			let src = document.getElementById("imageList");
+			let holder = document.createElement("div");
+			
+			let img = document.createElement("img")
+			img.style['width'] = "100%";
+			img.src = url;
+			holder.appendChild(img);
+			
+			src.appendChild(holder);
+			holder.className = "device"
+			holder.id = key
+			let can = 1;
+
+			var label = document.createElement("text");
+			var slider = document.createElement("input");
+			var c = document.createElement("div");
+			var colorPicker = document.createElement("input");
+			var xButton = document.createElement("button");
+			var setAll = document.createElement("button");
+			var deviceName = document.createElement("text");
+			holder.dat_slider = slider;
+			holder.dat_color = colorPicker;
+			holder.STATE = "ARGB"
+			holder.but = c;
+			xButton.className = "close";
+			xButton.innerHTML = "❌"
+			setAll.className = "setAll"
+			setAll.innerHTML = "Set All";
+			setAll.onclick = function() { //this is the worst shit ever, but I'm too tired to think of a better solution right now.
+				for(var o of document.getElementById("imageList").children) {
+					document.getElementById(o.id).dat_slider.value = slider.value;
+					document.getElementById(o.id).dat_color.value = colorPicker.value;
+					if(holder.STATE == "ARGB") {
+						o.but.children[0].children[0 * 2].click()
+					}
+					if(holder.STATE == "SRGB") {
+						o.but.children[0].children[1 * 2].click()
+					}
+					if(holder.STATE == "RGB") {
+						o.but.children[0].children[2 * 2].click()
+					}
+					if(holder.STATE == "OFF") {
+						o.but.children[0].children[3 * 2].click()
+					}
+					//send();
+				}
+			}
+			holder.getState = function() {
+				switch(holder.STATE) {
+					case "ARGB":
+						return `${key}>setSpeed|${slider.value},rainbow`
+						break;
+					case "SRGB":
+						return `${key}>setSpeed|${slider.value},staticRGB`;
+						break;
+					case "RGB":
+						return `${key}>${colorPicker.value}`
+						break;
+					case "OFF":
+						return `${key}>off`
+						break;
+				}
+			}
+			xButton.onclick = function() {
+				while (holder.firstChild) {
+	     			holder.removeChild(holder.lastChild);
+		  		}
+		  		holder.appendChild(img);
+		  		can = 2;
+			}
+			c.style['padding-top'] = "10px";
+			c.innerHTML = `
+<div class="switch-toggle switch-holo" style="font-size: 15px">
+<input id="${holder.id}_1" name="view_${holder.id}" type="radio" checked onclick="set('${holder.id}','ARGB')">
+<label for="${holder.id}_1" onclick>ARGB</label>
+
+<input id="${holder.id}_2" name="view_${holder.id}" type="radio" onclick="set('${holder.id}','SRGB')">
+<label for="${holder.id}_2" onclick>SRGB</label>
+
+<input id="${holder.id}_3" name="view_${holder.id}" type="radio" onclick="set('${holder.id}','RGB')">
+<label for="${holder.id}_3" onclick>RGB</label>
+
+<input id="${holder.id}_4" name="view_${holder.id}" type="radio" onclick="set('${holder.id}','OFF')">
+<label for="${holder.id}_4" onclick>Off</label>
+<a></a>
+</label>`;
+			
+			colorPicker.style['margin-top'] = "10px";
+			colorPicker.style['width'] = "50px";
+			colorPicker.style['height'] = "50px";
+			colorPicker.style['padding'] = "0px";
+			colorPicker.style['border-width'] = "0px";
+			colorPicker.style['background-color'] = "#0000";
+			colorPicker.type = "color"
+
+			var lastDateClr = 0;
+			colorPicker.oninput = function() {
+				if(Date.now() > lastDateClr + 1000 / 30.0) {
+					lastDateClr = Date.now();
+					holder.but.children[0].children[2 * 2].click();
+					ws_s(holder.getState())
+				}
+			}
+
+			var lastDateSld = 0;
+			slider.oninput = function() {
+				if(Date.now() > lastDateSld + 1000 / 30.0) {
+					lastDateSld = Date.now()
+					ws_s(`${holder.id}>setSpeed|${slider.value}`);
+				}
+			}
+
+			slider.type = "range"
+			slider.min = -10
+			slider.max = 10
+			slider.value = 1
+			slider.step = 0.1;
+			slider.className = "rang"
+			
+			label.innerHTML = "Speed"
+			label.className = "labelText"
+
+			deviceName.innerHTML = key
+			deviceName.className = "deviceName"
+
+			holder.onclick = function() {
+				can--;
+				if(can == 0) {
+					can = false;
+					while (holder.firstChild) {
+			     		holder.removeChild(holder.lastChild);
+				  	}
+				  	holder.appendChild(xButton);
+				  	holder.appendChild(setAll);
+					holder.appendChild(label);
+					holder.appendChild(slider);
+					holder.appendChild(c);
+					holder.appendChild(colorPicker);
+					holder.appendChild(deviceName);
+				}
+			}
+		}
+		function t(json) {
+			Object.keys(json).forEach(function(key) {
+			    var value = json[key];
+			    fetch(value["image"]).then(response => 
+					addDevice(response.url, key, value)
+			    );
+			});
+		}
+		fetch("devices.json")
+  		.then(response => response.json())
+  		.then(json => t(json));
+	</script>
+</head>
+<body style = "background-color: #000">
+	<div id = imageList class = bruh>
+	</div>
+</body>

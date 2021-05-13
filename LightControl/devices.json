@@ -1,0 +1,7 @@
+{
+	"Lamp": {"image": "images/lamp.svg"},
+	"Youtube": {"image": "images/youtube.svg"},
+	"Room": {"image": "images/room.svg"},
+	"Door": {"image": "images/door.svg"},
+	"Cubby": {"image": "images/cubby.svg"}
+}
